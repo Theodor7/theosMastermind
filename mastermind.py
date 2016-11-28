@@ -77,7 +77,6 @@ def createComb():
     if 'True' in differentColors and combLenVar <= colorVar:
         answer = []
         colorRandom = randint(0,len(colors)-1)
-        colorsUsed = []
         for i in range(combLenVar):
             while colorRandom in answer:
                 colorRandom = randint(0,len(colors)-1)
