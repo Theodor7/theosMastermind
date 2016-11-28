@@ -23,18 +23,19 @@ black = (0,0,0)
 #reads settings
 def settingsRead():
     with open("settings.ini") as f:
-        f.read(6)
+        f.readline()
+        f.read(5)
         #amount of rows 6-12
         rowVar = int(f.readline())
-        f.read(20)
+        f.read(19)
         #combination length 3-6
         combLenVar = int(f.readline())
-        f.read(8)
+        f.read(7)
         #amount of colors 2-10
         colorVar = int(f.readline())
-        for i in range(7):
+        for i in range(6):
             f.readline()
-        f.read(37)
+        f.read(36)
         #All different colors in combination True/false
         differentColors = str(f.readline())
     f.closed
@@ -46,17 +47,18 @@ try:
     settings = settingsRead()
 except:
     with open('settings.ini','w') as f:
-        f.write('Rows: 12\n'
-        'Combination Length: 4\n'
-        'Colors: 6\n'
-        '-----------------------\n'
-        'Rows should be between 6 and 12.\n'
-        'Combination length should be between 3 and 10.\n'
-        'Colors should be between 2 and 9.\n'
-        '-----------------------\n'
-        'Standard: 12 rows, 4 long, 6 colors.\n'
-        '-----------------------\n'
-        'All different colors in combination: False')
+        f.write(
+        '[Gameplay]\n'
+ +      'Rows=12\n'
+        'Combination Length=4\n'
+        'Colors=6\n'
+        '\n'
+ +      'Rows should be between 6 and 12.\n'
+ +      'Combination length should be between 3 and 10.\n'
+ +      'Colors should be between 2 and 10.\n'
+ +      'Standard: 12 rows, 4 long, 6 colors.\n'
+        '\n'
+        'All different colors in combination=False')
         f.close
     print 'Settings were not available and were set to default'
     settings = settingsRead()
@@ -220,13 +222,6 @@ while not gameExit:
 
                 win = False
                 loss = False
-
-
-    #print str(position)
-    #print answer
-    #print guessCurrent
-    #print guessMemory
-    #print codePegsMemory
 
     gameDisplay.fill(background)
     pygame.draw.rect(gameDisplay, brown0, [14,70,14+42*combLenVar,14])
