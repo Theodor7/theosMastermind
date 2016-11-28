@@ -20,8 +20,9 @@ gray = (100,100,100)
 white = (255,255,255)
 black = (0,0,0)
 
+#reads settings
 def settingsRead():
-    with open("settings.txt") as f:
+    with open("settings.ini") as f:
         f.read(6)
         #amount of rows 6-12
         rowVar = int(f.readline())
@@ -31,24 +32,31 @@ def settingsRead():
         f.read(8)
         #amount of colors 2-10
         colorVar = int(f.readline())
+        for i in range(7):
+            f.readline()
+        f.read(37)
+        #All different colors in combination True/false
+        differentColors = str(f.readline())
     f.closed
-    return [rowVar,combLenVar,colorVar]
+    return [rowVar,combLenVar,colorVar,differentColors]
 
 #creates settings if they don't exist
 chdir(path.dirname(path.realpath(__file__)))
 try:
     settings = settingsRead()
 except:
-    with open('settings.txt','w') as f:
+    with open('settings.ini','w') as f:
         f.write('Rows: 12\n'
         'Combination Length: 4\n'
         'Colors: 6\n'
         '-----------------------\n'
         'Rows should be between 6 and 12.\n'
         'Combination length should be between 3 and 10.\n'
-        'Colors should be between 2 and 10.\n'
+        'Colors should be between 2 and 9.\n'
         '-----------------------\n'
-        'Standard: 12 rows, 4 long, 6 colors.')
+        'Standard: 12 rows, 4 long, 6 colors.\n'
+        '-----------------------\n'
+        'All different colors in combination: False')
         f.close
     print 'Settings were not available and were set to default'
     settings = settingsRead()
@@ -56,24 +64,48 @@ except:
 rowVar = settings[0]
 combLenVar = settings[1]
 colorVar = settings[2]
+differentColors = settings[3]
 
-position = 0
-rowCurrent = 0
-guessMemory = []
-codePegsMemory = []
 colorsAll = [red,green,blue,yellow,magenta,cyan,orange,gray,white,black]
 #sets the colors available in current game
 colors = []
 for i in range(colorVar):
     colors.append(colorsAll[i])
-answer = []
+
 #creates secret answer
-for i in range(combLenVar):
-    answer.append(randint(0,len(colors)-1))
+def createComb():
+    if 'True' in differentColors and combLenVar <= colorVar:
+        answer = []
+        colorRandom = randint(0,len(colors)-1)
+        colorsUsed = []
+        for i in range(combLenVar):
+            while colorRandom in answer:
+                colorRandom = randint(0,len(colors)-1)
+            answer.append(colorRandom)
+    else:
+        if 'True' in differentColors:
+            print 'Not enough colors for the combination to have none of the same.'
+        answer = []
+        for i in range(combLenVar):
+            answer.append(randint(0,len(colors)-1))
+    return answer
 #creates default guess
-guessCurrent = []
-for i in range(combLenVar):
-    guessCurrent.append(0)
+def createDefaultGuess():
+    guessCurrent = []
+    for i in range(combLenVar):
+        guessCurrent.append(0)
+    return guessCurrent
+
+answer = createComb()
+guessCurrent = createDefaultGuess()
+
+position = 0
+rowCurrent = 0
+guessMemory = []
+codePegsMemory = []
+
+win = False
+loss = False
 
 gameDisplay = pygame.display.set_mode((53+63*combLenVar,112+42*rowVar))
 pygame.display.set_caption('Theo\'s Mastermind')
@@ -93,8 +125,6 @@ def codePegs():
     return pegs
 
 gameExit = False
-win = False
-loss = False
 
 clock = pygame.time.Clock()
 
@@ -171,13 +201,27 @@ while not gameExit:
                     guessMemory.append(tuple(guessCurrent))
                     codePegsMemory.append(codePegs())
                     if guessCurrent == answer:
-                        print 'YOU WON'
+                        print 'YOU WON!'
                         win = True
                     elif rowCurrent < rowVar - 1 :
                         rowCurrent += 1
                     else:
-                        print 'YOU LOST'
+                        print 'YOU LOST!'
                         loss = True
+            if event.key == pygame.K_BACKSPACE:
+                print 'Restarting...'
+
+                answer = createComb()
+                guessCurrent = createDefaultGuess()
+
+                position = 0
+                rowCurrent = 0
+                guessMemory = []
+                codePegsMemory = []
+
+                win = False
+                loss = False
+
 
     #print str(position)
     #print answer
