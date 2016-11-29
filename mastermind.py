@@ -1,6 +1,7 @@
 import pygame
-from random import randint
+from random import randint, choice
 from os import path, chdir
+from itertools import product
 
 pygame.init()
 
@@ -38,8 +39,11 @@ def settingsRead():
         f.read(36)
         #All different colors in combination True/false
         differentColors = str(f.readline())
+        f.readline()
+        f.read(44)
+        artificialIntelligence = str(f.readline())
     f.closed
-    return [rowVar,combLenVar,colorVar,differentColors]
+    return [rowVar,combLenVar,colorVar,differentColors,artificialIntelligence]
 
 #creates settings if they don't exist
 chdir(path.dirname(path.realpath(__file__)))
@@ -49,16 +53,19 @@ except:
     with open('settings.ini','w') as f:
         f.write(
         '[Gameplay]\n'
- +      'Rows=12\n'
+        'Rows=12\n'
         'Combination Length=4\n'
         'Colors=6\n'
         '\n'
- +      'Rows should be between 6 and 12.\n'
- +      'Combination length should be between 3 and 10.\n'
- +      'Colors should be between 2 and 10.\n'
- +      'Standard: 12 rows, 4 long, 6 colors.\n'
+        'Rows should be between 6 and 12.\n'
+        'Combination length should be between 3 and 10.\n'
+        'Colors should be between 2 and 10.\n'
+        'Standard: 12 rows, 4 long, 6 colors.\n'
         '\n'
-        'All different colors in combination=False')
+        'All different colors in combination=False\n'
+        '\n'
+        'I Don\'t want to solve this, do it yourself!=False\n'
+        '(It is advised not to let the AI solve anything harder than a standard combination)')
         f.close
     print 'Settings were not available and were set to default'
     settings = settingsRead()
@@ -67,6 +74,10 @@ rowVar = settings[0]
 combLenVar = settings[1]
 colorVar = settings[2]
 differentColors = settings[3]
+if 'True' in settings[4]:
+    artificialIntelligence = True
+else:
+    artificialIntelligence = False
 
 colorsAll = [red,green,blue,yellow,magenta,cyan,orange,gray,white,black]
 #sets the colors available in current game
@@ -125,15 +136,84 @@ def codePegs():
                 checkedPositions += 'guess'+str(q) + 'answer'+str(w)
     return pegs
 
+if artificialIntelligence == True:
+    GuessTimer = 0
+
 gameExit = False
 
 clock = pygame.time.Clock()
 
 while not gameExit:
+    if artificialIntelligence == True:
+        GuessTimer += 1
+        #delay between algorithm actions
+        if GuessTimer >= 5:
+            GuessTimer = 0
+            if rowCurrent == 0:
+                colorsPossible = []
+                for x in range(colorVar):
+                    colorsPossible.append(x)
+
+                answersPossible = list(product(colorsPossible, repeat=combLenVar))
+
+                #print answersPossible
+                for i in range(int(len(answer)/2)):
+                    guessCurrent[i] = guessCurrent[i]+1
+            guessMemory.append(tuple(guessCurrent))
+            codePegsMemory.append(codePegs())
+            if win == False and loss == False:
+                if guessCurrent == answer:
+                    print 'AI WON!'
+                    win = True
+                elif rowCurrent < rowVar - 1 :
+                    rowCurrent += 1
+
+                    codePegCheck = codePegsMemory[-1]
+
+                    #marking possible answers for deletion
+                    answersPossibleToDelete = []
+                    for i in range(len(answersPossible)):
+                        pegs = []
+                        checkedPositions = ''
+                        for q in range(len(guessCurrent)):
+                            if guessCurrent[q] == answersPossible[i][q]:
+                                pegs.append('b')
+                                checkedPositions += 'guess'+str(q) + 'answer'+str(q)
+                        for q in range(len(guessCurrent)):
+                            for w in range(len(guessCurrent)):
+                                if guessCurrent[q] == answersPossible[i][w] and 'answer'+str(w) not in checkedPositions and 'guess'+str(q) not in checkedPositions:
+                                    pegs.append('w')
+                                    checkedPositions += 'guess'+str(q) + 'answer'+str(w)
+
+                        if pegs != codePegCheck:
+                            answersPossibleToDelete.append(answersPossible[i])
+
+                    #deleting impossiple answers
+                    answersPossible = [x for x in answersPossible if x not in answersPossibleToDelete]
+                    guessCurrent = list(choice(answersPossible))
+
+                else:
+                    print 'AI LOST!'
+                    loss = True
+            else:
+                print 'Restarting...'
+
+                answer = createComb()
+                guessCurrent = createDefaultGuess()
+
+                position = 0
+                rowCurrent = 0
+                guessMemory = []
+                codePegsMemory = []
+
+                win = False
+                loss = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameExit = True
-        if event.type == pygame.KEYDOWN:
+
+        elif event.type == pygame.KEYDOWN and artificialIntelligence == False:
 
             if win == False and loss == False:
                 if event.key == pygame.K_1:
@@ -209,6 +289,7 @@ while not gameExit:
                     else:
                         print 'YOU LOST!'
                         loss = True
+
             if event.key == pygame.K_BACKSPACE:
                 print 'Restarting...'
 
