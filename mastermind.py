@@ -40,10 +40,14 @@ def settingsRead():
         #All different colors in combination True/false
         differentColors = str(f.readline())
         f.readline()
+        f.readline()
         f.read(44)
         artificialIntelligence = str(f.readline())
+        f.readline()
+        f.read(9)
+        aiSpeed = int(f.readline())
     f.closed
-    return [rowVar,combLenVar,colorVar,differentColors,artificialIntelligence]
+    return [rowVar,combLenVar,colorVar,differentColors,artificialIntelligence,aiSpeed]
 
 #creates settings if they don't exist
 chdir(path.dirname(path.realpath(__file__)))
@@ -64,8 +68,11 @@ except:
         '\n'
         'All different colors in combination=False\n'
         '\n'
+        '[AI]\n'
         'I Don\'t want to solve this, do it yourself!=False\n'
-        '(It is advised not to let the AI solve anything harder than a standard combination)')
+        '(It is advised not to let the AI solve anything harder than a standard combination)\n'
+        'AI speed=5\n'
+        'NB: Smaller number means quicker AI.')
         f.close
     print 'Settings were not available and were set to default'
     settings = settingsRead()
@@ -78,6 +85,7 @@ if 'True' in settings[4]:
     artificialIntelligence = True
 else:
     artificialIntelligence = False
+aiSpeed = settings[5]
 
 colorsAll = [red,green,blue,yellow,magenta,cyan,orange,gray,white,black]
 #sets the colors available in current game
@@ -138,16 +146,18 @@ def codePegs():
 
 if artificialIntelligence == True:
     GuessTimer = 0
+    print 'AI activated.'
 
 gameExit = False
 
 clock = pygame.time.Clock()
 
+#gameloop
 while not gameExit:
     if artificialIntelligence == True:
         GuessTimer += 1
         #delay between algorithm actions
-        if GuessTimer >= 5:
+        if GuessTimer >= aiSpeed:
             GuessTimer = 0
             if rowCurrent == 0:
                 colorsPossible = []
