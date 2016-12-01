@@ -21,6 +21,45 @@ gray = (100,100,100)
 white = (255,255,255)
 black = (0,0,0)
 
+#creates secret answer
+def createComb():
+    if 'True' in differentColors and combLenVar <= colorVar:
+        answer = []
+        colorRandom = randint(0,len(colors)-1)
+        for i in range(combLenVar):
+            while colorRandom in answer:
+                colorRandom = randint(0,len(colors)-1)
+            answer.append(colorRandom)
+    else:
+        if 'True' in differentColors:
+            print 'Not enough colors for the combination to have none of the same.'
+        answer = []
+        for i in range(combLenVar):
+            answer.append(randint(0,len(colors)-1))
+    return answer
+
+#creates default guess
+def createDefaultGuess():
+    guessCurrent = []
+    for i in range(combLenVar):
+        guessCurrent.append(0)
+    return guessCurrent
+
+#creates codepegs from guessCurrent
+def codePegs():
+    pegs = []
+    checkedPositions = ''
+    for q in range(len(guessCurrent)):
+        if guessCurrent[q] == answer[q]:
+            pegs.append('b')
+            checkedPositions += 'guess'+str(q) + 'answer'+str(q)
+    for q in range(len(guessCurrent)):
+        for w in range(len(guessCurrent)):
+            if guessCurrent[q] == answer[w] and 'answer'+str(w) not in checkedPositions and 'guess'+str(q) not in checkedPositions:
+                pegs.append('w')
+                checkedPositions += 'guess'+str(q) + 'answer'+str(w)
+    return pegs
+
 #reads settings
 def settingsRead():
     with open("settings.ini") as f:
@@ -63,7 +102,7 @@ except:
         '\n'
         'Rows should be between 6 and 12.\n'
         'Combination length should be between 3 and 10.\n'
-        'Colors should be between 2 and 10.\n'
+        'Colors should be between 2 and 9.\n'
         'Standard: 12 rows, 4 long, 6 colors.\n'
         '\n'
         'All different colors in combination=False\n'
@@ -77,6 +116,7 @@ except:
     print 'Settings were not available and were set to default'
     settings = settingsRead()
 
+#sets settings
 rowVar = settings[0]
 combLenVar = settings[1]
 colorVar = settings[2]
@@ -93,32 +133,9 @@ colors = []
 for i in range(colorVar):
     colors.append(colorsAll[i])
 
-#creates secret answer
-def createComb():
-    if 'True' in differentColors and combLenVar <= colorVar:
-        answer = []
-        colorRandom = randint(0,len(colors)-1)
-        for i in range(combLenVar):
-            while colorRandom in answer:
-                colorRandom = randint(0,len(colors)-1)
-            answer.append(colorRandom)
-    else:
-        if 'True' in differentColors:
-            print 'Not enough colors for the combination to have none of the same.'
-        answer = []
-        for i in range(combLenVar):
-            answer.append(randint(0,len(colors)-1))
-    return answer
-#creates default guess
-def createDefaultGuess():
-    guessCurrent = []
-    for i in range(combLenVar):
-        guessCurrent.append(0)
-    return guessCurrent
-
+#initial setup
 answer = createComb()
 guessCurrent = createDefaultGuess()
-
 position = 0
 rowCurrent = 0
 guessMemory = []
@@ -127,23 +144,11 @@ codePegsMemory = []
 win = False
 loss = False
 
+#display
 gameDisplay = pygame.display.set_mode((53+63*combLenVar,112+42*rowVar))
 pygame.display.set_caption('Theo\'s Mastermind')
 
-def codePegs():
-    pegs = []
-    checkedPositions = ''
-    for q in range(len(guessCurrent)):
-        if guessCurrent[q] == answer[q]:
-            pegs.append('b')
-            checkedPositions += 'guess'+str(q) + 'answer'+str(q)
-    for q in range(len(guessCurrent)):
-        for w in range(len(guessCurrent)):
-            if guessCurrent[q] == answer[w] and 'answer'+str(w) not in checkedPositions and 'guess'+str(q) not in checkedPositions:
-                pegs.append('w')
-                checkedPositions += 'guess'+str(q) + 'answer'+str(w)
-    return pegs
-
+#starts AI
 if artificialIntelligence == True:
     GuessTimer = 0
     print 'AI activated.'
@@ -154,32 +159,38 @@ clock = pygame.time.Clock()
 
 #gameloop
 while not gameExit:
+
+    #AI actions
     if artificialIntelligence == True:
         GuessTimer += 1
         #delay between algorithm actions
         if GuessTimer >= aiSpeed:
             GuessTimer = 0
+
             if rowCurrent == 0:
                 colorsPossible = []
                 for x in range(colorVar):
                     colorsPossible.append(x)
 
+                #creates a list of possible answers
                 answersPossible = list(product(colorsPossible, repeat=combLenVar))
 
-                #print answersPossible
-                for i in range(int(len(answer)/2)):
+                #creates the first AI guess
+                for i in range(int(combLenVar/2)):
                     guessCurrent[i] = guessCurrent[i]+1
+
             guessMemory.append(tuple(guessCurrent))
             codePegsMemory.append(codePegs())
+
             if win == False and loss == False:
                 if guessCurrent == answer:
                     print 'AI WON!'
                     win = True
+
                 elif rowCurrent < rowVar - 1 :
                     rowCurrent += 1
 
                     codePegCheck = codePegsMemory[-1]
-
                     #marking possible answers for deletion
                     answersPossibleToDelete = []
                     for i in range(len(answersPossible)):
@@ -225,6 +236,7 @@ while not gameExit:
 
         elif event.type == pygame.KEYDOWN and artificialIntelligence == False:
 
+            #Controls if no AI
             if win == False and loss == False:
                 if event.key == pygame.K_1:
                     position = 0
@@ -315,11 +327,16 @@ while not gameExit:
                 loss = False
 
     gameDisplay.fill(background)
+    #Line under answer
     pygame.draw.rect(gameDisplay, brown0, [14,70,14+42*combLenVar,14])
+    #Box around answer
     pygame.draw.rect(gameDisplay, brown0, [21,21,42*combLenVar,42])
+    #Box around current row
     pygame.draw.rect(gameDisplay, brown0, [21,49+42*(rowVar-rowCurrent),42*combLenVar,42])
+    #Box around currently selected position
     pygame.draw.rect(gameDisplay, brown1, [21+42*position,49+42*(rowVar-rowCurrent),42,42])
-    for x in range(len(guessCurrent)):
+    #Displays stand-in 'no data' pegs
+    for x in range(combLenVar):
         pygame.draw.rect(gameDisplay, brown1, [28+42*x,28,28,28])
         for y in range(rowVar):
             pygame.draw.rect(gameDisplay, brown2, [28+42*x,98+42*y,28,28])
@@ -345,6 +362,7 @@ while not gameExit:
     if win == True or loss == True:
         lastCodePegsVar = 1
     for x in range(rowCurrent + lastCodePegsVar):
+        #Displays codepeg background
         if len(codePegsMemory[x]) != 0:
             pygame.draw.rect(gameDisplay, brown0, [24+42*combLenVar,66+42*(rowVar-x),21*len(codePegsMemory[x])+1,22])
         blackPegs = 0
